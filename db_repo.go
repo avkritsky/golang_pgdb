@@ -13,7 +13,7 @@ type User struct {
 }
 
 
-type Userdate struct {
+type Userdata struct {
 	ID int
 	Username string
 	Name string
@@ -48,6 +48,7 @@ func openConnection() (*sql.DB, error) {
 }
 
 
+//exists - check user exsists in DB
 func exists(username string) int {
 	username = strings.ToLower(username)
 
@@ -84,4 +85,43 @@ func exists(username string) int {
 
 	return userID
 
+}
+
+
+// AddUser create user,  return ID new user or -1 for error
+func AddUser(d Userdata) int {
+	d.Username = strings.ToLower(d.Username)
+
+	db, err := openConnection()
+
+	if err != nil {
+		fmt.Println("Error with open connection:", err)
+		return -1
+	}
+
+	defer db.Close()
+
+	userID := exists(d.Username)
+
+	if userID != -1 {
+		fmt.Println("User already exists!")
+		return -1
+	}
+
+	insertStatement := `INSERT INTO "users" ("username") values ($1)`
+
+	_, err = db.Exec(insertStatement, d.Username)
+
+	if err != nil {
+		fmt.Println("Creating error:", err)
+	}
+
+	userID = exists(d.Username)
+
+	if userID == -1 {
+		fmt.Println("User not created!")
+		return userID
+	}
+
+	
 }
