@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
+	"strings"
 )
 
 type User struct {
@@ -44,4 +45,43 @@ func openConnection() (*sql.DB, error) {
 	}
 	
 	return db, nil
+}
+
+
+func exists(username string) int {
+	username = strings.ToLower(username)
+
+	db, err := openConnection()
+
+	if err != nil {
+		fmt.Println("Error in exists:", err)
+		return -1
+	}
+	defer db.Close()
+
+	userID := -1
+
+	statement := fmt.Sprintf(`SELECT "id" FROM "users" WHERE username = '%s'`, username)
+	rows, err := db.Query(statement)
+
+	if err != nil {
+		fmt.Println("Erorr with execute query:", err)
+		return userID
+	}
+
+	for rows.Next() {
+		var id int
+		err = rows.Scan(&id)
+
+		if err != nil {
+			fmt.Println("Error with scan results:", err)
+			return userID
+		}
+		userID = id
+	}
+
+	defer rows.Close()
+
+	return userID
+
 }
