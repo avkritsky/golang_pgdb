@@ -2,6 +2,7 @@ package golang_pgdb
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
 	"strings"
@@ -225,4 +226,38 @@ func ListUser() ([]Userdata, error) {
 	defer rows.Close()
 
 	return data, nil
+}
+
+func UpdateUser(data Userdata) error {
+	db, err := openConnection()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	userID := exists(data.Username)
+
+	if userID == -1 {
+		return errors.New("User does not exist!")
+	}
+
+	data.ID = userID
+
+	updateQuery := `
+		UPDATE "userdata"
+		SET
+			name=$1,
+			surname=$2,
+			description=$3
+		WHERE
+			userid = $4
+	`
+
+	_, err = db.Exec(updateQuery, data.Name, data.Surname, data.Description, data.ID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
